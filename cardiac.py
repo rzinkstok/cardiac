@@ -106,7 +106,7 @@ class CPU(object):
 
     def gather_instructions(self):
         self.opcodes = {}
-        for x in inspect.getmembers(self.__class__):
+        for x in inspect.getmembers(self):
             if x[0].startswith("opcode_"):
                 parts = x[0].split("_")
                 self.opcodes[int(parts[1])] = parts[2]

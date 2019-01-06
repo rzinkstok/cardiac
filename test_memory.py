@@ -11,7 +11,6 @@ from cardiac import (
 @pytest.fixture
 def memory():
     m = Memory()
-    m.init_mem()
     return m
 
 
