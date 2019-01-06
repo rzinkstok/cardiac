@@ -1,9 +1,10 @@
 import os
 from cardiac import Cardiac
 
-OPCODES = ("INP", "CLA", "ADD", "TAC", "SFT", "OUT", "STO", "SUB", "JMP", "HRS")
+INSTRUCTIONS = Cardiac().instructions
 
 
+# Exception classes
 class UndefinedVariable(Exception):
     pass
 
@@ -17,16 +18,23 @@ class InvalidInstruction(Exception):
 
 
 class Instruction(object):
+    """Class containing all info for a single instruction line."""
+
     def __init__(self, address, opcode, operand):
         self.address = address
         self.opcode = opcode
         self.operand = operand
 
     def card(self, variables):
+        """Create the addres/data card pair to store the instruction in memory.
+
+        Args:
+            variables (dict): a dict containing all variables that are defined
+        """
         if self.opcode == "DATA":
             card = f"{int(self.operand):03}"
         else:
-            opcode = OPCODES.index(self.opcode)
+            opcode = INSTRUCTIONS.index(self.opcode)
             if self.operand in variables:
                 operand = variables[self.operand]
             else:
@@ -39,6 +47,12 @@ class Instruction(object):
 
 
 class Assembler(object):
+    """A simple assembler for CARDIAC assembly code.
+
+    Args:
+        filename (str): the path to an assembly code file to process
+    """
+
     def __init__(self, filename=None):
         self.variables = {}
         self.instructions = []
@@ -57,40 +71,38 @@ class Assembler(object):
             self.write_bytecode()
 
     def parse_file(self, fn):
+        """Loop over all lines in the file and hand them to the parse_line method."""
         with open(fn, "r") as fp:
             lines = fp.readlines()
         for l in lines:
             self.parse_line(l)
 
     def parse_line(self, l):
-        parts = l.rstrip("\n").split()
+        """Parse a single line into the atomic tokens, and hand them to the process_instruction method."""
+        tokens = l.rstrip("\n").split()
 
-        if not parts:
+        if not tokens:
             return
 
-        if parts[0] in OPCODES:
-            parts = [""] + parts
-        parts = parts[:3]
+        if tokens[0] in INSTRUCTIONS:
+            tokens = [""] + tokens
+        tokens = tokens[:3]
 
-        if len(parts) != 3:
+        if len(tokens) != 3:
             raise InvalidInstruction(f"Too few elements in {l}")
 
-        if parts[1] not in list(OPCODES) + ["DATA"]:
+        if tokens[1] not in list(INSTRUCTIONS) + ["DATA"]:
             raise InvalidInstruction(f"Opcode not valid in {l}")
 
-        if parts[0]:
-            self.process_variable(parts)
+        self.process_instruction(tokens)
 
-        self.process_instruction(parts)
+    def process_instruction(self, tokens):
+        """Create a full instruction from the tokens."""
+        label = tokens[0]
+        opcode = tokens[1]
+        operand = tokens[2]
 
-    def process_variable(self, x):
-        self.variables[x[1]] = x[0]
-
-    def process_instruction(self, x):
-        label = x[0]
-        opcode = x[1]
-        operand = x[2]
-
+        # Save the first non-data instruction as the start program counter
         if not self.start_address and opcode != "DATA":
             self.start_address = self.current_address
 
@@ -103,6 +115,7 @@ class Assembler(object):
         self.current_address += 1
 
     def assemble(self):
+        """Build the bytecode string of the program."""
         self.cards = []
         for i in self.instructions:
             self.cards.append(i.card(self.variables))
@@ -113,12 +126,13 @@ class Assembler(object):
         self.output += f"002\n8{self.start_address:02}"
 
     def write_bytecode(self):
+        """Write the output to a deck file that can be read by CARDIAC."""
         with open(self.output_filepath, "w") as fp:
             fp.write(self.output)
 
 
 if __name__ == "__main__":
     a = Assembler("data/count.asm")
-    c = Cardiac(verbose=True)
+    c = Cardiac()
     c.read_deck(a.output_filepath)
     c.run()

@@ -1,5 +1,5 @@
 import inspect
-
+import re
 
 # Exception classes
 class MemoryOutOfRange(Exception):
@@ -130,9 +130,14 @@ class CPU(object):
         """
         self.opcodes = {}
         for x in inspect.getmembers(self):
-            if x[0].startswith("opcode_"):
+            if re.search("opcode\_\d\_[a-z]+", x[0]):
                 parts = x[0].split("_")
                 self.opcodes[int(parts[1])] = parts[2]
+
+    @property
+    def instructions(self):
+        """Return a tuple of all available instructions sorted by opcode."""
+        return tuple(self.opcodes[x].upper() for x in sorted(self.opcodes.keys()))
 
     def reset(self):
         """Reset registers and program counter."""
@@ -197,15 +202,8 @@ class Cardiac(Memory, IO, CPU):
                 print(f"PC:  {self.pc:02}")
                 print()
                 print(f"MEM:")
-                print("".join([f"{i:02}  " for i in range(self.mem_size)]))
-                print(
-                    "".join(
-                        [
-                            f"{x} " if x else "    "
-                            for x in self.mem_cells[: self.mem_size]
-                        ]
-                    )
-                )
+                print("".join([f" {i:02}  " for i in range(self.mem_size)]))
+                print("".join([f"{x}  " if x else "     " for x in self.mem_cells]))
                 print()
                 try:
                     print(f"NEXT IN: {self.input_stack[-1]}")
@@ -276,6 +274,6 @@ class Cardiac(Memory, IO, CPU):
 
 
 if __name__ == "__main__":
-    c = Cardiac(verbose=True)
+    c = Cardiac()
     c.read_deck("data/count2.cdc")
     c.run()
