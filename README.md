@@ -21,4 +21,5 @@ Sample code
 
 - count1.asm: simple upcounter, adapted from https://www.cs.drexel.edu/~bls96/museum/cardiac.html
 - count2.asm: my own upcounter implementation
+- multiply.asm: a simple multiplication of two positive integers
 

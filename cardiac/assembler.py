@@ -1,6 +1,7 @@
 import os
 from cardiac import Cardiac
 
+# Load instructions from the Cardiac implementation
 INSTRUCTIONS = Cardiac().instructions
 
 
@@ -132,7 +133,7 @@ class Assembler(object):
 
 
 if __name__ == "__main__":
-    a = Assembler("data/count.asm")
-    c = Cardiac()
+    a = Assembler("data/multiply.asm")
+    c = Cardiac(verbose=True)
     c.read_deck(a.output_filepath)
     c.run()

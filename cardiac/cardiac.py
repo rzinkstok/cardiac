@@ -204,7 +204,17 @@ class Cardiac(Memory, IO, CPU):
                 print()
                 print(f"MEM:")
                 print("".join([f" {i:02}  " for i in range(self.mem_size)]))
-                print("".join([f"{x}  " if x else "     " for x in self.mem_cells]))
+                memstring = ""
+                for x in self.mem_cells:
+                    if x:
+                        x = int(x)
+                        if x >= 0:
+                            memstring += f" {x:03} "
+                        else:
+                            memstring += f"{x:04} "
+                    else:
+                        memstring += "     "
+                print(memstring)
                 print()
                 try:
                     print(f"NEXT IN: {self.input_stack[-1]}")
