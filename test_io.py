@@ -43,10 +43,10 @@ def test_io_put_output(io):
         assert d == o
 
 
-def test_io_format_output(io, capsys):
+def test_io_flush_output(io, capsys):
     data = ["001", "567", "-178"]
     for d in data:
         io.put_output(d)
-    io.format_output()
+    io.flush_output()
     out, err = capsys.readouterr()
     assert "\n".join(data) in out

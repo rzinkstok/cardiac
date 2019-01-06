@@ -1,5 +1,4 @@
 import inspect
-from contextlib import contextmanager
 
 
 # Exception classes
@@ -29,6 +28,12 @@ class InvalidOperation(Exception):
 
 # CARDIAC part classes
 class Memory(object):
+    """Simple memory object for decimal words. The words hold decimal numbers between -999 and 999.
+
+    Args:
+        size (int): the number of words (cells) the memory can hold.
+    """
+
     def __init__(self, size=100):
         super(Memory, self).__init__()
         self.mem_size = size
@@ -36,6 +41,7 @@ class Memory(object):
         self.mem_set(0, "001")
 
     def _mem_check_address(self, address):
+        """Check whether the argument is a valid memory address."""
         try:
             address = int(address)
         except ValueError:
@@ -45,18 +51,22 @@ class Memory(object):
         return address
 
     def mem_get(self, address):
+        """Get the content of the memory cell with the given address."""
         address = self._mem_check_address(address)
         return self.mem_cells[address]
 
     def mem_get_int(self, address):
+        """Get the content of the memory cell with the given address as an int."""
         return int(self.mem_get(address))
 
     def mem_set(self, address, data):
+        """Set the content of the memory cell with the given address to the given data."""
         address = self._mem_check_address(address)
         data = self._mem_clean_data(data)
         self.mem_cells[address] = data
 
     def _mem_clean_data(self, data):
+        """Process the data before insertion."""
         try:
             data = int(data)
         except ValueError:
@@ -68,12 +78,15 @@ class Memory(object):
 
 
 class IO(object):
+    """Simple input/output class."""
+
     def __init__(self):
         super(IO, self).__init__()
         self.input_stack = []
         self.output_stack = []
 
     def read_deck(self, fn):
+        """Read a card deck from file into the input stack."""
         self.input_stack = []
         with open(fn, "r") as fp:
             for l in fp.readlines():
@@ -82,17 +95,20 @@ class IO(object):
                     self.input_stack.append(data)
         self.input_stack.reverse()
 
-    def format_output(self):
-        print()
-        print("OUTPUT:")
-        print("-" * 60)
+    def flush_output(self):
+        """Flush the output stack to stdout."""
+        # print()
+        # print("OUTPUT:")
+        # print("-" * 60)
         print("\n".join(self.output_stack))
-        print("-" * 60)
+        # print("-" * 60)
 
     def put_output(self, data):
+        """Put the given data on the output stack."""
         self.output_stack.append(data)
 
     def get_input(self):
+        """Retrieve the next item from the input stack."""
         try:
             return self.input_stack.pop()
         except IndexError:
@@ -100,11 +116,18 @@ class IO(object):
 
 
 class CPU(object):
+    """CPU implementation."""
+
     def __init__(self):
         super(CPU, self).__init__()
         self.reset()
 
     def gather_instructions(self):
+        """Retrieves all methods that implement instructions and collects them in a dict.
+
+        Any member functions whose name conforms to 'opcode_<opcode>_<alias>' are included.
+        E.g. 'opcode_0_cla' will be included with opcode 0 and alias 'cla'.
+        """
         self.opcodes = {}
         for x in inspect.getmembers(self):
             if x[0].startswith("opcode_"):
@@ -112,29 +135,42 @@ class CPU(object):
                 self.opcodes[int(parts[1])] = parts[2]
 
     def reset(self):
+        """Reset registers and program counter."""
         self.acc = 0
         self.pc = 0
         self.ir = 0
         self.running = False
 
     def fetch(self):
+        """Fetch the next instruction into the instruction register and advance the program counter."""
         self.ir = self.mem_get_int(self.pc)
         self.pc += 1
 
     def process(self):
+        """Fetch and process the next instruction."""
         self.fetch()
         opcode, arg = self.ir // 100, self.ir % 100
         if opcode not in self.opcodes:
             raise InvalidOperation(f"Opcode {opcode} not available")
+
+        # Build the method name for the opcode
         opname = f"opcode_{opcode}"
         if self.opcodes[opcode]:
             opname += f"_{self.opcodes[opcode]}"
         op = getattr(self, opname)
+
+        # Execute
         op(arg)
 
 
 # Main CARDIAC class
 class Cardiac(Memory, IO, CPU):
+    """CARDIAC computer implementation.
+
+    Args:
+        verbose (bool): whether to print debugging info for each cycle.
+    """
+
     def __init__(self, verbose=False):
         super(Cardiac, self).__init__()
         self.opcodes = {}
@@ -142,14 +178,16 @@ class Cardiac(Memory, IO, CPU):
         self.verbose = verbose
 
     def debug(func):
+        """Decorator to be used for opcode methods. Will cause debug info to be printed."""
         opcode = int(func.__name__.split("_")[1])
 
         def debug_wrapper(self, arg):
             if self.verbose:
+                print("=" * 60)
                 print()
-                print("-" * 60)
+                print("-" * 10)
                 print(f"{opcode} {self.opcodes[opcode].upper()} [{arg:02}]")
-                print("-" * 60)
+                print("-" * 10)
 
             res = func(self, arg)
 
@@ -175,6 +213,7 @@ class Cardiac(Memory, IO, CPU):
                     print("NEXT IN: None")
                 print("OUT:")
                 print(self.output_stack)
+                print()
 
             return res
 
@@ -226,14 +265,17 @@ class Cardiac(Memory, IO, CPU):
         self.pc = arg
 
     def run(self):
+        """Start the computer and run the program loaded, if any."""
         self.running = True
         while self.running:
-            self.process()
-            # input()
-        self.format_output()
+            try:
+                self.process()
+            except InputExhausted:
+                self.reset()
+        self.flush_output()
 
 
 if __name__ == "__main__":
-    c = Cardiac(verbose=False)
-    c.read_deck("deck5.txt")
+    c = Cardiac(verbose=True)
+    c.read_deck("data/deck5.txt")
     c.run()
