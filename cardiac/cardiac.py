@@ -1,6 +1,7 @@
 import inspect
 import re
 
+
 # Exception classes
 class MemoryOutOfRange(Exception):
     pass
