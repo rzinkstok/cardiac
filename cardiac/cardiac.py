@@ -277,5 +277,5 @@ class Cardiac(Memory, IO, CPU):
 
 if __name__ == "__main__":
     c = Cardiac(verbose=True)
-    c.read_deck("data/deck5.txt")
+    c.read_deck("data/count2.cdc")
     c.run()
