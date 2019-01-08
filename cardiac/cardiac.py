@@ -188,7 +188,7 @@ class Cardiac(Memory, IO, CPU):
         opcode = int(func.__name__.split("_")[1])
 
         def debug_wrapper(self, arg):
-            if self.verbose:
+            if self.verbose and self.mem_get(2) not in ['', '800']:
                 print("=" * 60)
                 print()
                 print("-" * 10)
@@ -197,7 +197,7 @@ class Cardiac(Memory, IO, CPU):
 
             res = func(self, arg)
 
-            if self.verbose:
+            if self.verbose and self.mem_get(2) not in ['', '800']:
                 print()
                 print(f"ACC: {self.acc:04}")
                 print(f"PC:  {self.pc:02}")

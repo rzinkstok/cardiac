@@ -32,17 +32,18 @@ class Instruction(object):
         Args:
             variables (dict): a dict containing all variables that are defined
         """
+        if self.operand in variables:
+            operand = variables[self.operand]
+        else:
+            try:
+                operand = int(self.operand)
+            except ValueError:
+                raise UndefinedVariable(f"Variable {self.operand} is undefined")
+
         if self.opcode == "DATA":
-            card = f"{int(self.operand):03}"
+            card = f"{int(operand):03}"
         else:
             opcode = INSTRUCTIONS.index(self.opcode)
-            if self.operand in variables:
-                operand = variables[self.operand]
-            else:
-                try:
-                    operand = int(self.operand)
-                except ValueError:
-                    raise UndefinedVariable(f"Variable {self.operand} is undefined")
             card = f"{opcode}{operand:02}"
         return f"0{self.address:02}\n{card}\n"
 
@@ -81,14 +82,14 @@ class Assembler(object):
     def parse_line(self, l):
         """Parse a single line into the atomic tokens, and hand them to the process_instruction method."""
         if l.startswith("#"):
-            continue
+            return
 
         tokens = l.rstrip("\n").split()
 
         if not tokens:
             return
 
-        if tokens[0] in INSTRUCTIONS:
+        if tokens[0] in list(INSTRUCTIONS) + ["DATA"]:
             tokens = [""] + tokens
         tokens = tokens[:3]
 
@@ -136,7 +137,15 @@ class Assembler(object):
 
 
 if __name__ == "__main__":
-    a = Assembler("data/multiply.asm")
+    import sys
+    import os
+
+    # fn = sys.argv[1]
+    # if not os.path.exists(fn):
+    #     print("File not found!")
+    #     sys.exit(1)
+    fn = "data/sort.asm"
+    a = Assembler(fn)
     c = Cardiac(verbose=True)
     c.read_deck(a.output_filepath)
     c.run()
