@@ -8,6 +8,9 @@ This implementation leans heavily on the work of Kevin Veroneau (see
 http://www.pythondiary.com/blog/Oct.15,2014/building-cpu-simulator-python.html) 
 and the information found on https://www.cs.drexel.edu/~bls96/museum/cardiac.html.
 
+Assembler
+---------
+
 The assembler provided is quite basic, but operational. Assembly code is expected to use
 a 4-column format, with any number of whitespace used as seperator. The columns are as follows:
 
@@ -15,6 +18,8 @@ a 4-column format, with any number of whitespace used as seperator. The columns 
 - Instruction name or DATA
 - Operand (either numeric value or a label)
 - Comment (optional)
+
+Any lines that start with `#` are regarded as comment.
 
 Sample code
 -----------
