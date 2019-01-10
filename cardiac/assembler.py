@@ -81,7 +81,7 @@ class Assembler(object):
 
     def parse_line(self, l):
         """Parse a single line into the atomic tokens, and hand them to the process_instruction method."""
-        if l.startswith("#"):
+        if l.strip().startswith("#"):
             return
 
         tokens = l.rstrip("\n").split()
